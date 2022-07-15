@@ -177,7 +177,7 @@ class SOLLUMZ_PT_ANIMATIONS_TOOL_PANEL(bpy.types.Panel):
                     layout.operator(
                         ycd_ops.SOLLUMZ_OT_animation_fill.bl_idname)
             else:
-                row = layout.row()
+                row = layout.row(align=False)
                 row.operator(
                     ycd_ops.SOLLUMZ_OT_create_clip_dictionary.bl_idname)
                 row.prop(context.scene, "create_animation_type")

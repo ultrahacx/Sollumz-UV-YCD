@@ -29,6 +29,11 @@ def ensure_action_track(track_type: TrackType, action_type: ActionType):
             return TrackType.RootMotionPosition
         if track_type is TrackType.BoneRotation:
             return TrackType.RootMotionRotation
+    elif action_type is ActionType.Base:
+        if track_type is TrackType.UV0:
+            return TrackType.UV0
+        if track_type is TrackType.UV1:
+            return TrackType.UV1
 
     return track_type
 
@@ -178,8 +183,8 @@ def sequence_items_from_action(action, sequence_items, action_data, action_type,
                 u_channel_loc = []
                 v_channel_loc = []
                 for vector in uv_locations:
-                    u_channel_loc.append(vector.x)
-                    v_channel_loc.append(vector.y)
+                    u_channel_loc.append(round(vector.x, 4))
+                    v_channel_loc.append(-round(vector.y, 4))
 
                 if len(u_channel_loc) > 0:
                         u_locations_map[0] = u_channel_loc
@@ -312,6 +317,17 @@ def sequence_item_from_frames_data(track, frames_data):
 
             sequence_data.channels.append(channel)
         else:
+            channel1 = ycdxml.ChannelsListProperty.StaticFloat()
+            channel2 = ycdxml.ChannelsListProperty.StaticFloat()
+            if track == 17:
+                channel1.value = 1
+                channel2.value = 0
+            elif track == 18:
+                channel1.value = 0
+                channel2.value = 1
+            sequence_data.channels.append(channel1)
+            sequence_data.channels.append(channel2)
+            # Main data channel
             sequence_data.channels.append(
                 build_values_channel(frames_data, list(set(frames_data))))
 

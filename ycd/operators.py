@@ -309,7 +309,6 @@ class SOLLUMZ_OT_create_uv_anim_node(SOLLUMZ_OT_base, bpy.types.Operator):
         mat_nodes = mat_nodetree.nodes
         for node in mat_nodes:
             if node.type == "BSDF_PRINCIPLED":
-                print("Found BSDF")
                 base_color_input = node.inputs[0].links[0]
                 base_tex_node = base_color_input.from_node
 
