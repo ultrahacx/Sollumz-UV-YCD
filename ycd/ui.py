@@ -136,8 +136,10 @@ class SOLLUMZ_PT_UV_ANIMATION_ACTIONS(bpy.types.Panel):
             return False
 
     def draw(self, context):
+        obj = context.active_object
         layout = self.layout
-        layout.prop(context.scene, "uv_anim_materials", text="Material")
+        # layout.prop(context.scene, "uv_anim_materials", text="Material")
+        layout.prop(obj.uv_anim_materials, "material")
 
 
 class SOLLUMZ_PT_ANIMATIONS_TOOL_PANEL(bpy.types.Panel):
@@ -179,6 +181,9 @@ class SOLLUMZ_PT_ANIMATIONS_TOOL_PANEL(bpy.types.Panel):
                 row.operator(
                     ycd_ops.SOLLUMZ_OT_create_clip_dictionary.bl_idname)
                 row.prop(context.scene, "create_animation_type")
+                row = layout.row()
+                row.operator(
+                    ycd_ops.SOLLUMZ_OT_create_uv_anim_node.bl_idname)
         else:
             layout.operator(
                 ycd_ops.SOLLUMZ_OT_create_clip_dictionary.bl_idname)

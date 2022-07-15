@@ -22,6 +22,11 @@ def uv_object_filter(self, object):
 def uv_material_filter(self, material):
     return material.sollum_type != "sollumz_material_none"
 
+
+class UVAnimMaterials(bpy.types.PropertyGroup):
+    material: bpy.props.PointerProperty(
+        name="Material", type=bpy.types.Material, poll=uv_material_filter)
+
 class ClipDictionary(bpy.types.PropertyGroup):
     armature: bpy.props.PointerProperty(
         name="Armature", type=bpy.types.Armature, poll=armature_obj_filter)
@@ -77,9 +82,8 @@ def register():
         name="Type",
         default="REGULAR"
     )
-    bpy.types.Scene.uv_anim_materials = bpy.props.PointerProperty(
-        type=bpy.types.Material,
-        poll=uv_material_filter)
+    bpy.types.Object.uv_anim_materials = bpy.props.PointerProperty(
+        type=UVAnimMaterials)
     bpy.types.Object.clip_dict_properties = bpy.props.PointerProperty(
         type=ClipDictionary)
     bpy.types.Object.clip_properties = bpy.props.PointerProperty(
@@ -90,6 +94,7 @@ def register():
 
 
 def unregister():
+    del bpy.types.Object.uv_anim_materials
     del bpy.types.Object.clip_dict_properties
     del bpy.types.Object.clip_properties
     del bpy.types.Object.animation_properties

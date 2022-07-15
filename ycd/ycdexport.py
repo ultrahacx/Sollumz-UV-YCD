@@ -155,9 +155,11 @@ def sequence_items_from_action(action, sequence_items, action_data, action_type,
 
     elif animation_type == "UV":
         print("Craeting sequence item from action for UV")
-        locations_map = {}
+        u_locations_map = {}
+        v_locations_map = {}
         uv_mat = action
-        mat_nodes = uv_mat.node_tree.nodes
+        uv_nodetree = uv_mat.node_tree
+        mat_nodes = uv_nodetree.nodes
         vector_math_node = None
 
         # Verify if material has required node(Vector Math) to get animation data
@@ -168,19 +170,30 @@ def sequence_items_from_action(action, sequence_items, action_data, action_type,
         if vector_math_node is None:
             raise Exception("Unable to find Vector Math node in material to get UV animation data!")
         else:
-            vector_math_node.inputs[1].path_from_id("default_value")
+            pos_vector_path = vector_math_node.inputs[1].path_from_id("default_value")
+            uv_fcurve = uv_nodetree.animation_data.action.fcurves
+            uv_locations = evaluate_vector(
+                    uv_fcurve, pos_vector_path, frame_count)
+            if len(uv_locations) > 0:
+                u_channel_loc = []
+                v_channel_loc = []
+                for vector in uv_locations:
+                    u_channel_loc.append(vector.x)
+                    v_channel_loc.append(vector.y)
 
+                if len(u_channel_loc) > 0:
+                        u_locations_map[0] = u_channel_loc
+                        
+                if len(v_channel_loc) > 0:
+                        v_locations_map[0] = v_channel_loc
 
-        pos_vector_path = p_bone.path_from_id("location")
-        b_locations = evaluate_vector(
-                action.fcurves, pos_vector_path, frame_count)
-                
-        if len(b_locations) > 0:
-                locations_map[parent_tag] = b_locations
+            if len(u_locations_map) > 0:
+                sequence_items[ensure_action_track(
+                    TrackType.UV0, action_type)] = u_locations_map
 
-        if len(locations_map) > 0:
-            sequence_items[ensure_action_track(
-                TrackType.BonePosition, action_type)] = locations_map
+            if len(v_locations_map) > 0:
+                sequence_items[ensure_action_track(
+                    TrackType.UV1, action_type)] = v_locations_map
 
 
 def build_values_channel(values, uniq_values, indirect_percentage=0.1):
@@ -289,9 +302,19 @@ def sequence_item_from_frames_data(track, frames_data):
                 build_values_channel(values_z, uniq_z))
             sequence_data.channels.append(
                 build_values_channel(values_w, uniq_w))
+    # UV0/U or UV1/V
     elif track == 17 or track == 18:
-        values_x = []
-        values_y = []
+        len_uniq_uv = len(frames_data)
+
+        if len_uniq_uv == 1:
+            channel = ycdxml.ChannelsListProperty.StaticVector3()
+            channel.value = frames_data[0]
+
+            sequence_data.channels.append(channel)
+        else:
+            sequence_data.channels.append(
+                build_values_channel(frames_data, list(set(frames_data))))
+
 
     return sequence_data
 
@@ -338,10 +361,10 @@ def animation_from_object(animation_obj, bones_name_map, bones_map, is_ped_anima
             #     action, sequence_items, bones_map, action_type, frames_count, is_ped_animation)
     elif animation_type == "UV":
         print("\nBuilding sequence items for UV anim export\n")
-        action_material = animation_obj.uv_anim_materials
+        action_material = animation_obj.uv_anim_materials.material
         action_type = ActionType.Base
         sequence_items_from_action(
-            action_material, sequence_items, animation_obj, action_type, frame_count, is_ped_animation, animation_type)
+            action_material, sequence_items, animation_obj, action_type, frame_count, animation_type)
 
     sequence = ycdxml.Animation.SequenceListProperty.Sequence()
     sequence.frame_count = frame_count
@@ -442,6 +465,9 @@ def clip_dictionary_from_object(exportop, obj, exportpath, export_settings=None)
                 break
     elif animation_type == "UV":
         print("Exporting UV animation...")
+        bones_name_map = None
+        bones_map = None
+        is_ped_animation = False
 
     animations_obj = None
     clips_obj = None
