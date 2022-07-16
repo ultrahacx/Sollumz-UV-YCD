@@ -156,14 +156,20 @@ class SOLLUMZ_OT_create_clip_dictionary(SOLLUMZ_OT_base, bpy.types.Operator):
             return {"FINISHED"}
 
         active_object = bpy.context.selected_objects[0]
+        active_mat = active_object.active_material
         anim_type = context.scene.create_animation_type
 
         if (anim_type == "REGULAR" and not isinstance(active_object.data, bpy.types.Armature)):
             self.report({'ERROR'}, 'Selected object is not a valid armature to create animation')
             return {"FINISHED"}
         
-        if (anim_type == "UV" and (len(active_object.data.materials) <= 0 or active_object.active_material.sollum_type == "sollumz_material_none")):
-            self.report({'ERROR'}, 'Selected object does not a valid sollumz material to create animation')
+        if (anim_type == "UV" and (len(active_object.data.materials) <= 0 or active_mat.sollum_type == "sollumz_material_none")):
+            self.report({'ERROR'}, 'Selected object/material does not a valid sollumz type to create animation')
+            return {"FINISHED"}
+
+        # Verify if shader has UV parameter or not to prevent UV anim creation for unsupported shaders
+        if (anim_type == "UV" and ("globalAnimUV0_x" not in active_mat.node_tree.nodes)):
+            self.report({'ERROR'}, 'Selected material shader does not support UV animations')
             return {"FINISHED"}
         
 

@@ -353,11 +353,12 @@ def animation_from_object(animation_obj, bones_name_map, bones_map, is_ped_anima
 
     sequence_items = {}
     if animation_type == "REGULAR":
+        print("Got regular animation animation_from_object")
         if animation_properties.base_action:
             action = animation_properties.base_action
             action_type = ActionType.Base
             sequence_items_from_action(
-                action, sequence_items, bones_map, action_type, frame_count, is_ped_animation)
+                action, sequence_items, bones_map, action_type, frame_count, animation_type)
 
         if animation_properties.root_motion_location_action:
             action = animation_properties.root_motion_location_action
@@ -365,7 +366,7 @@ def animation_from_object(animation_obj, bones_name_map, bones_map, is_ped_anima
 
             animation.unknown10 |= AnimationFlag.RootMotion
             sequence_items_from_action(
-                action, sequence_items, bones_map, action_type, frame_count, is_ped_animation)
+                action, sequence_items, bones_map, action_type, frame_count, animation_type)
 
         # TODO: Figure out root motion rotation
         # if animation_properties.root_motion_rotation_action:
@@ -374,7 +375,7 @@ def animation_from_object(animation_obj, bones_name_map, bones_map, is_ped_anima
 
             # animation.unknown10 |= AnimationFlag.RootMotion
             # sequence_items_from_action(
-            #     action, sequence_items, bones_map, action_type, frames_count, is_ped_animation)
+            #     action, sequence_items, bones_map, action_type, frames_count, animation_type)
     elif animation_type == "UV":
         print("\nBuilding sequence items for UV anim export\n")
         action_material = animation_obj.uv_anim_materials.material
@@ -470,6 +471,7 @@ def clip_dictionary_from_object(exportop, obj, exportpath, export_settings=None)
     if animation_type is None:
         raise Exception("Invalid/unknown clip dictionary type")
     elif animation_type == "REGULAR":
+        print("Trying to export regular animation")
         bones_name_map = build_name_bone_map(armature_obj)
         bones_map = build_bone_map(armature_obj)
 
