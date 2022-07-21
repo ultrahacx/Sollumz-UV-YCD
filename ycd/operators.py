@@ -331,5 +331,4 @@ class SOLLUMZ_OT_create_uv_anim_node(SOLLUMZ_OT_base, bpy.types.Operator):
                 self.report({'INFO'}, 'Added UV animation link to selected material')
                 break
 
-
         return {"FINISHED"}

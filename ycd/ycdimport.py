@@ -79,23 +79,6 @@ def get_location_from_sequence_data(sequence_data, frame_id, p_bone, is_convert_
 
     return diff_location
 
-def debugUVValues(sequence_data, frame_id):
-    channel_values = get_values_from_sequence_data(sequence_data, frame_id)
-    if len(channel_values) == 1:
-        
-        if type(channel_values[0]) == Vector:
-            return channel_values[0].z
-        else:
-            return channel_values[0]
-    else:
-        location = Vector([
-            channel_values[0],
-            channel_values[1],
-            channel_values[2],
-        ])
-        print("Returning single Z", location.z)
-        return location.z
-
 
 def get_quaternion_from_sequence_data(sequence_data, frame_id, p_bone, is_convert_local_to_pose):
     channel_values = get_values_from_sequence_data(sequence_data, frame_id)
@@ -148,28 +131,21 @@ def combine_sequences_and_convert_to_groups(animation, armature, is_ped_animatio
 
     if len(animation.sequences) <= 1:
         sequence_frame_limit = animation.frame_count + 30
-    print("DEBUG: Animation sequence length:", animation.hash, len(animation.sequences))
 
     actions_data = {}
-    uvanim_uvalue = []
-    uvanim_vvalue = []
     for frame_id in range(0, animation.frame_count):
         sequence_index = int(frame_id / (sequence_frame_limit))
-        # print("DEBUG:")
-        # print("DEBUG: Sequence index:", sequence_index)
         sequence_frame = frame_id % (sequence_frame_limit)
 
         if sequence_index >= len(animation.sequences):
             sequence_index = len(animation.sequences) - 1
 
         sequence = animation.sequences[sequence_index]
-        # print("DEBUG: Sequence:", sequence)
         
         for sequence_data_index, sequence_data in enumerate(sequence.sequence_data):
             bone_data = animation.bone_ids[sequence_data_index]
 
             if bone_data is None or bone_data.bone_id not in bone_map:
-                print('\n CONTINUING \n')
                 continue
 
             p_bone = bone_map[bone_data.bone_id]
@@ -200,19 +176,7 @@ def combine_sequences_and_convert_to_groups(animation, armature, is_ped_animatio
                 rotation = get_quaternion_from_sequence_data(
                     sequence_data, sequence_frame, p_bone, False)
                 insert_action_data(
-                    actions_data, "root_motion_rotation", bone_data.track, bone_name, rotation)
-            elif bone_data.track == 17:
-                # UV x-axis animation
-                uval = debugUVValues(sequence_data, frame_id)
-                uvanim_uvalue.append(uval)
-                # get_values_from_sequence_data(sequence_data, sequence_frame)
-            elif bone_data.track == 18:
-                uval = debugUVValues(sequence_data, frame_id)
-                uvanim_vvalue.append(uval)
-    print("\n \n \nU Channel values:", uvanim_uvalue)
-    print("\n \n \nV Channel values:", uvanim_vvalue)
-                
-
+                    actions_data, "root_motion_rotation", bone_data.track, bone_name, rotation)                
 
     for type in actions_data:
         for track in actions_data[type]:
@@ -450,23 +414,20 @@ def create_clip_dictionary_template(name, obj, anim_type):
     if anim_type == "REGULAR":
         clip_dictionary_obj.clip_dict_properties.armature = obj.data
     elif anim_type == "UV":
-        if len(obj.data.materials) >= 1:
-            if obj.active_material.sollum_type != "sollumz_material_none":
-                print("\nCreating UV ycd for material:", obj.active_material)
-                clip_dictionary_obj.clip_dict_properties.uv_obj = obj
-            else:
-                raise Exception("Error selected materials is not a valid Sollumz material to animate")
-        else:
+        if len(obj.data.materials) < 1:
             raise Exception("Error cannot find any materials to animate")
+        else:
+            clip_dictionary_obj.clip_dict_properties.uv_obj = obj
     else:
-        raise Exception("Selected anim type not implemented!")
+        raise Exception("Selected animation type not implemented!")
 
     return clip_dictionary_obj, clips_obj, animations_obj
 
 
 def clip_dictionary_to_obj(clip_dictionary, name, armature, armature_obj):
+    animation_type = bpy.context.scene.create_animation_type
     _, clips_obj, animations_obj = create_clip_dictionary_template(
-        name, armature_obj, bpy.context.scene.create_animation_type)
+        name, armature_obj, animation_type)
 
     is_ped_animation = False
 
@@ -501,6 +462,11 @@ def import_ycd(export_op, filepath, import_settings):
     armature_obj = get_armature_obj(armature)
 
     ycr_xml = YCD.from_xml_file(filepath)
+
+    animation_type = bpy.context.scene.create_animation_type
+    if animation_type == "UV":
+        export_op.warning("UV import is not supported. Change the animation type under Animation Tools panel")
+        return
 
     clip_dictionary_to_obj(
         ycr_xml,

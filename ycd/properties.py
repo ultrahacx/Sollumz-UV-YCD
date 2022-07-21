@@ -1,5 +1,7 @@
+from pydoc import cli
 import bpy
 from ..sollumz_properties import SollumType
+from ..tools.jenkhash import Generate
 
 
 def animations_filter(self, object):
@@ -22,10 +24,41 @@ def uv_object_filter(self, object):
 def uv_material_filter(self, material):
     return material.sollum_type != "sollumz_material_none"
 
+def update_hashes(self, context):
+    animation = context.object
+    clip_dict = animation.parent.parent
+    anim_drawable_mesh = clip_dict.clip_dict_properties.uv_obj
+    anim_drawable_model = anim_drawable_mesh.parent.parent.name
+    material_index = None
+    for index, mat in enumerate(anim_drawable_mesh.data.materials):
+        if mat == self.material:
+            material_index = index
+            break
+
+    if material_index is None:
+        raise Exception("Selected material does not exist with UV object")
+
+    anim_hash = anim_drawable_model + "_uv_" + str(material_index)
+    clip_hash = "hash_" + hex(Generate(anim_drawable_model) + (material_index + 1)).strip('0x').upper()
+    clip_name = "pack:/" + anim_hash + ".clip"
+    
+    animation.animation_properties.hash = anim_hash
+
+    for item in clip_dict.children:
+        if item.sollum_type == "sollumz_clips":
+            for clip in item.children:
+                clip_linked_anims = clip.clip_properties.animations
+                for anim in clip_linked_anims:
+                    if anim.animation.name == animation.name:
+                        clip.clip_properties.hash = clip_hash
+                        clip.clip_properties.name = clip_name
+                        break
+
 
 class UVAnimMaterials(bpy.types.PropertyGroup):
     material: bpy.props.PointerProperty(
-        name="Material", type=bpy.types.Material, poll=uv_material_filter)
+        name="Material", type=bpy.types.Material, poll=uv_material_filter, update=update_hashes)
+
 
 class ClipDictionary(bpy.types.PropertyGroup):
     armature: bpy.props.PointerProperty(
@@ -75,9 +108,7 @@ def register():
             ("REGULAR",
              "Regular", "Create a general YCD for armature/bone animation"),
             ("UV",
-             "UV", "Create a UV YCD."),
-            ("CAM",
-             "Cam", "Create a CAM YCD."),
+             "UV", "Create a UV YCD.")
         ],
         name="Type",
         default="REGULAR"
@@ -90,7 +121,6 @@ def register():
         type=ClipProperties)
     bpy.types.Object.animation_properties = bpy.props.PointerProperty(
         type=AnimationProperties)
-    
 
 
 def unregister():

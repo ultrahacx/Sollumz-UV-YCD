@@ -327,7 +327,7 @@ def sequence_item_from_frames_data(track, frames_data):
                 channel2.value = 1
             sequence_data.channels.append(channel1)
             sequence_data.channels.append(channel2)
-            # Main data channel
+            # Main channel item which contains frame data
             sequence_data.channels.append(
                 build_values_channel(frames_data, list(set(frames_data))))
 

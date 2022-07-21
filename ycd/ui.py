@@ -31,7 +31,6 @@ def draw_animation_properties(self, context):
 
         layout.prop(animation_properties, "hash")
         layout.prop(animation_properties, "frame_count")
-        # layout.prop_search(context.scene, "selected_mat", bpy.data, "materials", text="Selected Material")
 
 
 def draw_clip_dictionary_properties(self, context):
@@ -138,7 +137,6 @@ class SOLLUMZ_PT_UV_ANIMATION_ACTIONS(bpy.types.Panel):
     def draw(self, context):
         obj = context.active_object
         layout = self.layout
-        # layout.prop(context.scene, "uv_anim_materials", text="Material")
         layout.prop(obj.uv_anim_materials, "material")
 
 
